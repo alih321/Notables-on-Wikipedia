@@ -12,34 +12,56 @@ from urllib.request import urlopen;
 def main():
     url = "https://en.wikipedia.org/wiki/Luc_Bourdon"
     response = urlopen(url)
-    
-    getPersonInformation(response)
-
-
-def getPersonInformation(response):
-    
-    
     soup = BeautifulSoup(response, "lxml")
+
+    if getPersonInformation(soup) != False:
+        getAllLinksFromPage(soup)
+
+
+def getPersonInformation(soup):
     
     #Simple Information (Name, YoB, YoD)
     name = soup.find_all("h1")[0].text
     
+    infoLabels = soup.find_all(class_="infobox-label")
     infoData = soup.find_all(class_="infobox-data")
+    
+    
+    #Test for YoD labeled    
+    if "Died" in map(lambda l : l.get_text(), infoLabels):
+        print("Found!")
+    else:
+         print("No death date!") 
+         return False #Handle as you will. Just placeholder. I know this is one of Zinoviev's sins
 
-    bornDate = infoData[0].find("br").previous.strip()
+
+    # Hard coded. My initial thought is to find the first instance of "Born" / "Died" in infoLabel
+    # and use that index on infoData. Just don't have time right now.
+    bornDate = infoData[0].find("br").previous.strip() 
     deathDate = infoData[1].find("span").previous.strip()
     
-    print(name, bornDate, deathDate)     
+    print(name, bornDate, deathDate)
     
+    return (name, bornDate, deathDate)
+
+        
+
+def getAllLinksFromPage(soup):
+        
     #Get all links in Tuple
-    #allLinks = []
+    allLinks = []
+            
+    bodyContent = soup.find("div", {"id": "bodyContent"})
     
-    #bodyContentChildren = soup.find("div", {"id" : "bodyContent"})
-    #print(bodyContentChildren)
+    for tag in bodyContent.find_all("a"):
+        if tag.has_attr("href"):
+            allLinks.append((tag.string, tag["href"]))
+            
+    for link in allLinks:
+        print(link)
+        print("\n")
     
-    #for link in bodyContentChildren[0]:
-     #   if link.has_attr("href"):
-      #      allLinks.append((link.string, link["href"]))
+    return allLinks;
     
 
         
