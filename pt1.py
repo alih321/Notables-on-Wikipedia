@@ -8,9 +8,10 @@ Created on Fri Feb 11 20:53:08 2022
 
 from bs4 import BeautifulSoup;
 from urllib.request import urlopen;
+import csv
 
 def main():
-    depth = 2
+    depth = 3
     seed = "https://en.wikipedia.org/wiki/Luc_Bourdon"
     seedTup = tuple([seed, seed])
     urls = [seedTup] # master list of urls
@@ -23,21 +24,39 @@ def main():
         source = urlPair[0]
         url = urlPair[1]
         if depth > 0:
-            crawl(source, url, nextDepth, personInfo)
+            crawl(source, url, nextDepth, personInfo, linkConnections)
         # if all urls at a depth have been crawled, append all data to master urls list
         # clear temprorary url storage
         if i == len(urls)-1:
+            print("layer " + str(3-depth) + " completed")
             urls += nextDepth
             nextDepth = list()
             depth -= 1
-    # TODO export to CSV
-
+    linkConnections = linkConnections[1:]
+    print("Crawling finished")
+    print(linkConnections)
+    print(personInfo)
+    print("Writing to CSV")
+    with open("links.csv", "w+") as infilecsv:
+        writer = csv.writer(infilecsv)
+        writer.writerow(["from_url","to_url"])
+        for row in linkConnections:
+            parsed = list(row)
+            for i, item in enumerate(parsed):
+                parsed[i] = item[30:]
+            writer.writerow(parsed)
+    with open("notables.csv", "w+") as infilecsv:
+        writer = csv.writer(infilecsv)
+        writer.writerow(["url","name","born","died"])
+        for key in personInfo:
+            writer.writerow(tuple([key])+personInfo[key])
+    print("Writing to CSV finished")
 
 def crawl(source, url, nextDepth, personInfo, linkConnections):
     soup = getSoupFromUrl(url)
     parsedUrl = url[30:] # get name from wikipedia link
     # we make sure not to download the url again if already parsed
-    if parsedUrl not in personInfo 
+    if parsedUrl not in personInfo:
         info = getPersonInformation(soup)
         if info == False:
             return
@@ -48,7 +67,7 @@ def crawl(source, url, nextDepth, personInfo, linkConnections):
     nextDepth += getAllLinksFromPage(source, soup)
 
 def getSoupFromUrl(url):
-    response = urloen(url)
+    response = urlopen(url)
     soup = BeautifulSoup(response, "lxml")
     return soup
 
@@ -78,21 +97,18 @@ def getPersonInformation(soup):
     
     return (name, bornDate, deathDate)
 
-def getAllLinksFromPage(souce, soup):
-
+def getAllLinksFromPage(source, soup):
     #Get all links in Tuple
     allLinks = []
-            
     bodyContent = soup.find("div", {"id": "bodyContent"})
-   
     for tag in bodyContent.find_all("a"):
         if tag.has_attr("href"):
-            pair = [source, (tag.string, tag["href"])]
-            allLinks.append(tuple(pair)) 
+            pulledUrl = tag.get("href")
+            if (pulledUrl[:6] == "/wiki/"):
+                pair = [source, "https://en.wikipedia.org" + pulledUrl]
+                allLinks.append(tuple(pair)) 
     for links in allLinks:
-        print(links[0] + "->" + links[1])
-        print("\n")
-    
+        print(source + "->" + str(links[1]))
     return allLinks;
 
 if __name__ == "__main__":
