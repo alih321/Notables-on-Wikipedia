@@ -2,17 +2,18 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Feb 11 20:53:08 2022
-
 @authors: alihachem LucAlexander
 """
 
 from bs4 import BeautifulSoup;
 from urllib.request import urlopen;
 import csv
+import time
 
 def main():
     depth = 3
-    seed = "https://en.wikipedia.org/wiki/Luc_Bourdon"
+    #seed = "https://en.wikipedia.org/wiki/Luc_Bourdon"
+    seed = "https://en.wikipedia.org/wiki/Muhammad_Ali"
     seedTup = tuple([seed, seed])
     urls = [seedTup] # master list of urls
     linkConnections = list() # final list of extracted links in tuple form (source, destination)
@@ -74,28 +75,27 @@ def getSoupFromUrl(url):
 def getPersonInformation(soup):
     
     #Simple Information (Name, YoB, YoD)
+    
+    if not checkPageSignificance(soup):
+        print("NOT SIGNIFICANT!", soup.url)
+        return False;
+    
     name = soup.find_all("h1")[0].text
     
-    infoLabels = soup.find_all(class_="infobox-label")
-    infoData = soup.find_all(class_="infobox-data")
+    bornLabel = soup.find(class_="infobox-label", string="Born")
+    deathLabel = soup.find(class_="infobox-label", string="Died")
     
-    
-    #Test for YoD labeled    
-    if "Died" in map(lambda l : l.get_text(), infoLabels):
-        print("Found!")
-    else:
-        print("No year of death found")
-        return False
-
-
-    # Hard coded. My initial thought is to find the first instance of "Born" / "Died" in infoLabel
-    # and use that index on infoData. Just don't have time right now.
-    bornDate = infoData[0].find("br").previous.strip() 
-    deathDate = infoData[1].find("span").previous.strip()
-    
-    print(name, bornDate, deathDate)
+    bornDate = bornLabel.next.next.text.strip()
+    deathDate = deathLabel.next.next.text.strip()
+    print(bornLabel.next.next.text, "\n\n")
+    print(deathLabel.next.next.text, "\n\n")
     
     return (name, bornDate, deathDate)
+
+
+def checkPageSignificance(soup):
+    return ((soup.find(class_="infobox-label", string="Born") is not None) and (soup.find(class_="infobox-label", string="Died") is not None))
+        
 
 def getAllLinksFromPage(source, soup):
     #Get all links in Tuple
