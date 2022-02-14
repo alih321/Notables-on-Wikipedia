@@ -65,7 +65,7 @@ def crawl(source, url, nextDepth, personInfo, linkConnections):
     # regardless of visited or not, store as tuple in final list
     linkConnections.append(tuple([source, url]))
     # add to temprary url storage medium
-    nextDepth += getAllLinksFromPage(source, soup)
+    nextDepth += getAllLinksFromPage(url, soup)
 
 def getSoupFromUrl(url):
     response = urlopen(url)
