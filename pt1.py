@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Fri Feb 11 20:53:08 2022
 @authors: alihachem LucAlexander
@@ -8,10 +6,10 @@ Created on Fri Feb 11 20:53:08 2022
 from bs4 import BeautifulSoup;
 from urllib.request import urlopen;
 import csv
-import time
+import re
 
 def main():
-    depth = 3
+    depth = 2
     #seed = "https://en.wikipedia.org/wiki/Luc_Bourdon"
     seed = "https://en.wikipedia.org/wiki/Muhammad_Ali"
     seedTup = tuple([seed, seed])
@@ -87,10 +85,27 @@ def getPersonInformation(soup):
     
     bornDate = bornLabel.next.next.text.strip()
     deathDate = deathLabel.next.next.text.strip()
-    print(bornLabel.next.next.text, "\n\n")
-    print(deathLabel.next.next.text, "\n\n")
     
-    return (name, bornDate, deathDate)
+    bornMatch = re.search("\d\d\d+", bornDate)
+    deathMatch = re.search("\d\d\d+", deathDate)
+    
+    yod = None
+    yob = None
+    
+    if (bornMatch is not None):
+        yob = bornMatch.group()
+    else:
+        return False
+    
+    if (deathMatch is not None):
+        yod = deathMatch.group()
+    else:
+        return False
+        
+    print(yob, "\n\n")
+    print(yod, "\n\n")
+    
+    return (name, yob, yod)
 
 
 def checkPageSignificance(soup):
